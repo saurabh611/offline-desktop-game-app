@@ -32,8 +32,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function setupEventListeners() {
-    startGameBtn.addEventListener('click', startGame);
-    stopGameBtn.addEventListener('click', stopGame);
+    startGameBtn.addEventListener('click', async () => {
+        try {
+            await window.electron.startGame();
+        } catch (error) {
+            console.error('Failed to start game:', error);
+        }
+    });
+
+    stopGameBtn.addEventListener('click', async () => {
+        try {
+            await window.electron.stopGame();
+        } catch (error) {
+            console.error('Failed to stop game:', error);
+        }
+    });
+
     declareResultBtn.addEventListener('click', declareResult);
 
     // Result mode toggle
