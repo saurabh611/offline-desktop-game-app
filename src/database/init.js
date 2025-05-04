@@ -8,6 +8,7 @@ const db = new sqlite3.Database(dbPath);
 
 function initializeDatabase() {
     db.serialize(() => {
+        console.log('Initializing database and creating tables if not exist...');
         // Users table
         db.run(`CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,
@@ -16,7 +17,10 @@ function initializeDatabase() {
             wallet_balance REAL DEFAULT 0,
             is_admin BOOLEAN DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+        )`, (err) => {
+            if (err) console.error('Error creating users table:', err);
+            else console.log('Users table ready');
+        });
 
         // Game sessions table
         db.run(`CREATE TABLE IF NOT EXISTS game_sessions (
@@ -28,7 +32,10 @@ function initializeDatabase() {
             close_panna TEXT,
             status TEXT DEFAULT 'pending',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+        )`, (err) => {
+            if (err) console.error('Error creating game_sessions table:', err);
+            else console.log('Game sessions table ready');
+        });
 
         // Bets table
         db.run(`CREATE TABLE IF NOT EXISTS bets (
@@ -43,7 +50,10 @@ function initializeDatabase() {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id),
             FOREIGN KEY (game_session_id) REFERENCES game_sessions(id)
-        )`);
+        )`, (err) => {
+            if (err) console.error('Error creating bets table:', err);
+            else console.log('Bets table ready');
+        });
 
         // Wallet transactions table
         db.run(`CREATE TABLE IF NOT EXISTS wallet_transactions (
@@ -54,7 +64,10 @@ function initializeDatabase() {
             reference_id TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
-        )`);
+        )`, (err) => {
+            if (err) console.error('Error creating wallet_transactions table:', err);
+            else console.log('Wallet transactions table ready');
+        });
 
         // Create default admin user if not exists
         const salt = bcrypt.genSaltSync(10);
@@ -62,7 +75,10 @@ function initializeDatabase() {
         
         db.run(`INSERT OR IGNORE INTO users (id, username, password, is_admin, wallet_balance) 
                 VALUES (?, ?, ?, ?, ?)`, 
-                ['admin', 'admin', defaultAdminPassword, 1, 1000000]);
+                ['admin', 'admin', defaultAdminPassword, 1, 1000000], (err) => {
+                    if (err) console.error('Error inserting default admin user:', err);
+                    else console.log('Default admin user ensured');
+                });
     });
 }
 
