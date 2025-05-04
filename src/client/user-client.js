@@ -104,58 +104,130 @@ class GameClient {
     }
 
     connectToServer(serverIP) {
-        if (this.ws) {
-            this.ws.close();
+        return new Promise((resolve, reject) => {
+            try {
+                if (this.ws) {
+                    this.ws.close();
+                }
+
+                // Validate server IP
+                const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+                let cleanIP = serverIP;
+                if (serverIP.includes(':')) {
+                    cleanIP = serverIP.split(':')[0];
+                }
+
+                if (!ipRegex.test(cleanIP)) {
+                    throw new Error('Invalid server IP address format');
+                }
+
+                this.serverUrl = `ws://${cleanIP}:8080`;
+                this.ws = new WebSocket(this.serverUrl);
+                this.connectionStatus = 'connecting';
+                this.notifyConnectionStatus();
+
+                // Set connection timeout
+                const connectionTimeout = setTimeout(() => {
+                    if (this.ws.readyState !== WebSocket.OPEN) {
+                        this.ws.close();
+                        reject(new Error('Connection timeout'));
+                    }
+                }, 5000);
+
+                this.ws.on('open', () => {
+                    clearTimeout(connectionTimeout);
+                    console.log('Connected to admin server');
+                    this.reconnectAttempts = 0;
+                    this.connectionStatus = 'connected';
+                    this.notifyConnectionStatus();
+                    
+                    // Authenticate with server if user exists
+                    if (this.currentUser) {
+                        this.authenticate();
+                    }
+                    
+                    resolve();
+                });
+
+                this.ws.on('message', (data) => {
+                    try {
+                        const message = JSON.parse(data);
+                        this.handleServerMessage(message);
+                    } catch (error) {
+                        console.error('Error parsing server message:', error);
+                        this.notifyError('Failed to process server message');
+                    }
+                });
+
+                this.ws.on('close', () => {
+                    console.log('Disconnected from server');
+                    this.connectionStatus = 'disconnected';
+                    this.notifyConnectionStatus();
+                    this.attemptReconnect();
+                });
+
+                this.ws.on('error', (error) => {
+                    console.error('WebSocket error:', error);
+                    this.connectionStatus = 'error';
+                    this.notifyConnectionStatus();
+                    this.notifyError('Connection error occurred');
+                    this.attemptReconnect();
+                    reject(error);
+                });
+
+            } catch (error) {
+                console.error('Connection setup error:', error);
+                this.notifyError(error.message);
+                reject(error);
+            }
+        });
+    }
+
+    authenticate() {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            return Promise.reject(new Error('Not connected to server'));
         }
 
-        // Remove port if already present in serverIP
-        let cleanIP = serverIP;
-        if (serverIP.includes(':')) {
-            cleanIP = serverIP.split(':')[0];
-        }
-
-        this.serverUrl = `ws://${cleanIP}:8080`;
-        this.ws = new WebSocket(this.serverUrl);
-
-        this.ws.on('open', () => {
-            console.log('Connected to admin server');
-            this.reconnectAttempts = 0;
-            
-            // Authenticate with server
-            if (this.currentUser) {
-                this.ws.send(JSON.stringify({
+        return new Promise((resolve, reject) => {
+            try {
+                const authMessage = {
                     type: 'auth',
                     payload: {
                         username: this.currentUser.username,
                         password: this.currentUser.password
                     }
-                }));
-            }
-        });
+                };
 
-        this.ws.on('message', (data) => {
-            try {
-                const message = JSON.parse(data);
-                this.handleServerMessage(message);
+                this.ws.send(JSON.stringify(authMessage));
+                resolve();
             } catch (error) {
-                console.error('Error parsing server message:', error);
+                console.error('Authentication error:', error);
+                reject(error);
             }
         });
+    }
 
-        this.ws.on('close', () => {
-            console.log('Disconnected from server');
-            this.attemptReconnect();
-        });
+    notifyConnectionStatus() {
+        if (global.mainWindow && !global.mainWindow.isDestroyed()) {
+            global.mainWindow.webContents.send('connection:status', {
+                status: this.connectionStatus,
+                serverUrl: this.serverUrl
+            });
+        }
+    }
 
-        this.ws.on('error', (error) => {
-            console.error('WebSocket error:', error);
-            this.attemptReconnect();
-        });
+    notifyError(message) {
+        if (global.mainWindow && !global.mainWindow.isDestroyed()) {
+            global.mainWindow.webContents.send('error', {
+                message: message
+            });
+        }
     }
 
     attemptReconnect() {
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
             console.log('Max reconnection attempts reached');
+            this.notifyError('Failed to reconnect to server after maximum attempts');
             return;
         }
 
@@ -163,37 +235,76 @@ class GameClient {
             clearTimeout(this.reconnectTimeout);
         }
 
-        this.reconnectTimeout = setTimeout(() => {
+        const backoffTime = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+        console.log(`Scheduling reconnect attempt in ${backoffTime/1000} seconds`);
+
+        this.reconnectTimeout = setTimeout(async () => {
             this.reconnectAttempts++;
             console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-            this.connectToServer(this.serverUrl);
-        }, 5000); // Wait 5 seconds before reconnecting
+            
+            try {
+                await this.connectToServer(this.serverUrl);
+                console.log('Reconnection successful');
+            } catch (error) {
+                console.error('Reconnection failed:', error);
+                this.notifyError(`Reconnection attempt ${this.reconnectAttempts} failed`);
+            }
+        }, backoffTime);
     }
 
     handleServerMessage(message) {
-        switch (message.type) {
-            case 'auth_response':
-                if (message.success) {
-                    this.currentUser = message.user;
-                }
-                break;
+        try {
+            switch (message.type) {
+                case 'auth_response':
+                    if (message.success) {
+                        this.currentUser = message.user;
+                        this.sendToRenderer('auth:success', this.currentUser);
+                    } else {
+                        this.notifyError(message.message || 'Authentication failed');
+                        this.sendToRenderer('auth:failed', message);
+                    }
+                    break;
 
-            case 'game_state':
-                // Forward game state to renderer
-                this.sendToRenderer('game:stateChanged', message.game);
-                break;
+                case 'game_state':
+                    this.sendToRenderer('game:stateChanged', message.game);
+                    break;
 
-            case 'wallet_update':
-                // Update local wallet balance and notify renderer
-                if (this.currentUser) {
-                    this.currentUser.walletBalance += message.amount;
-                    this.sendToRenderer('wallet:updated', this.currentUser.walletBalance);
-                }
-                break;
+                case 'game_phase':
+                    this.sendToRenderer('game:phaseChanged', message.phase);
+                    break;
 
-            case 'bet_response':
-                this.sendToRenderer('bet:response', message);
-                break;
+                case 'wallet_update':
+                    if (this.currentUser) {
+                        this.currentUser.walletBalance += message.amount;
+                        this.sendToRenderer('wallet:updated', {
+                            balance: this.currentUser.walletBalance,
+                            change: message.amount,
+                            timestamp: new Date().toISOString()
+                        });
+                    }
+                    break;
+
+                case 'bet_response':
+                    this.sendToRenderer('bet:response', message);
+                    break;
+
+                case 'result_declared':
+                    this.sendToRenderer('game:resultDeclared', {
+                        result: message.result,
+                        animate: message.animate
+                    });
+                    break;
+
+                case 'error':
+                    this.notifyError(message.message);
+                    break;
+
+                default:
+                    console.warn('Unknown message type:', message.type);
+            }
+        } catch (error) {
+            console.error('Error handling server message:', error);
+            this.notifyError('Error processing server message');
         }
     }
 
