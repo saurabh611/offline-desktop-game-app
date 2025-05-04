@@ -56,17 +56,27 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                 <div class="flex justify-between items-center">
                     <h1 class="text-2xl font-bold text-gray-900">Game Client</h1>
-                    <div class="flex items-center space-x-6">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <div id="connection-status" class="px-2 py-1 text-sm rounded bg-gray-100">
+                            Connecting...
+                        </div>
                         <div class="text-sm text-gray-600">
-                            Game Time: <span id="game-timer" class="font-mono bg-gray-100 px-2 py-1 rounded">00:00</span>
+                            Phase: <span id="game-phase" class="font-medium">Waiting</span>
                         </div>
-                        <div class="text-sm">
-                            Wallet Balance: <span id="wallet-balance" class="font-semibold">₹0.00</span>
+                        <div class="text-sm text-gray-600">
+                            Timer: <span id="game-timer" class="font-mono bg-gray-100 px-2 py-1 rounded">00:00</span>
                         </div>
-                        <button id="logout" class="text-sm text-red-600 hover:text-red-800">
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-sm bg-gray-50 px-3 py-2 rounded-lg">
+                            Wallet Balance: <span id="wallet-balance" class="font-semibold transition-colors duration-300">₹0.00</span>
+                        </div>
+                        <button id="logout" class="text-sm text-red-600 hover:text-red-800 transition-colors duration-300">
                             <i class="fas fa-sign-out-alt mr-1"></i>Logout
                         </button>
                     </div>
+                </div>
                 </div>
             </div>
         </header>
@@ -78,21 +88,25 @@
                 <div class="bg-white rounded-lg shadow p-6">
                     <h2 class="text-lg font-semibold mb-4">Game Results</h2>
                     
-                    <!-- Current Result -->
-                    <div class="mb-6">
-                        <div class="text-sm text-gray-600 mb-2">Current Result</div>
-                        <div id="current-result" class="result-spinner bg-gray-50 p-4 rounded-lg text-center text-3xl font-mono">
-                            --- -- ---
+                <!-- Current Result -->
+                <div class="mb-6">
+                    <div class="text-sm text-gray-600 mb-2">Current Result</div>
+                    <div id="current-result" class="result-spinner bg-gray-50 p-6 rounded-lg text-center text-3xl font-mono transition-all duration-300 ease-in-out">
+                        <div class="flex justify-center items-center space-x-4">
+                            <span class="text-blue-600">---</span>
+                            <span class="text-green-600">--</span>
+                            <span class="text-purple-600">---</span>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Last 5 Results -->
-                    <div>
-                        <div class="text-sm text-gray-600 mb-2">Last 5 Results</div>
-                        <div id="result-history" class="space-y-2">
-                            <!-- Results will be populated here -->
-                        </div>
+                <!-- Last 5 Results -->
+                <div>
+                    <div class="text-sm text-gray-600 mb-2">Last 5 Results</div>
+                    <div id="result-history" class="space-y-2 transition-all duration-300">
+                        <!-- Results will be populated here -->
                     </div>
+                </div>
                 </div>
 
                 <!-- Betting Panel -->
@@ -130,7 +144,10 @@
                         <!-- Potential Payout -->
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <div class="text-sm text-gray-600">Potential Payout</div>
-                            <div id="potential-payout" class="text-2xl font-semibold">₹0.00</div>
+                            <div id="potential-payout" class="text-2xl font-semibold transition-colors duration-300">₹0.00</div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                Based on selected bet type and amount
+                            </div>
                         </div>
 
                         <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
@@ -166,7 +183,45 @@
         </main>
     </div>
 
+    <!-- Notifications Container -->
+    <div id="notifications" class="fixed bottom-4 right-4 z-50 space-y-2">
+        <!-- Notifications will be inserted here -->
+    </div>
+
     <!-- Scripts -->
     <script src="user.js"></script>
+
+    <!-- Additional Styles -->
+    <style>
+        @keyframes spin {
+            from { transform: rotateY(0deg); }
+            to { transform: rotateY(1800deg); }
+        }
+
+        .result-spinner.spinning {
+            animation: spin 3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .scale-0 {
+            transform: scale(0);
+        }
+
+        .scale-100 {
+            transform: scale(1);
+        }
+
+        .blur-sm {
+            filter: blur(4px);
+        }
+    </style>
 </body>
 </html>
