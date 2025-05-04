@@ -13,11 +13,16 @@ const resultModeInputs = document.querySelectorAll('input[name="result-mode"]');
 let currentGame = null;
 let timerInterval = null;
 
+const serverPortDisplay = document.getElementById('server-port');
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     // Get and display server IP
     const ip = await window.electron.getIPAddress();
     serverIpDisplay.textContent = ip;
+
+    // Set and display server port (default 8080)
+    serverPortDisplay.textContent = '8080';
 
     // Set up event listeners
     setupEventListeners();
