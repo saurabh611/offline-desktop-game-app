@@ -1,6 +1,8 @@
 const WebSocket = require('ws');
 const { ipcMain } = require('electron');
-const { db } = require('../database/init');
+const { db, initializeDatabase } = require('../database/init');
+
+initializeDatabase();
 const { networkInterfaces } = require('os');
 
 class GameClient {
@@ -51,7 +53,8 @@ class GameClient {
             // Check if username exists
             db.get('SELECT * FROM users WHERE username = ?', [username], (err, row) => {
                 if (err) {
-                    reject(new Error('Database error'));
+                    console.error('Database error during user lookup:', err);
+                    reject(new Error('Database error: ' + err.message));
                     return;
                 }
                 if (row) {
@@ -65,7 +68,8 @@ class GameClient {
                     [username, username, password, 0],
                     (err) => {
                         if (err) {
-                            reject(new Error('Failed to register user'));
+                            console.error('Database error during user insert:', err);
+                            reject(new Error('Failed to register user: ' + err.message));
                             return;
                         }
                         resolve({ success: true, message: 'Registration successful' });
@@ -104,7 +108,13 @@ class GameClient {
             this.ws.close();
         }
 
-        this.serverUrl = `ws://${serverIP}:8080`;
+        // Remove port if already present in serverIP
+        let cleanIP = serverIP;
+        if (serverIP.includes(':')) {
+            cleanIP = serverIP.split(':')[0];
+        }
+
+        this.serverUrl = `ws://${cleanIP}:8080`;
         this.ws = new WebSocket(this.serverUrl);
 
         this.ws.on('open', () => {
