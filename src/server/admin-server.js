@@ -1,7 +1,9 @@
 const WebSocket = require('ws');
 const { networkInterfaces } = require('os');
-const { db } = require('../database/init');
+const { db, initializeDatabase } = require('../database/init');
 const { v4: uuidv4 } = require('uuid');
+
+initializeDatabase();
 
 // Get local IP address
 const getLocalIP = () => {
@@ -161,12 +163,15 @@ class GameServer {
         switch (action.command) {
             case 'start_game':
                 this.startNewGame();
+                this.broadcastGameState();
                 break;
             case 'stop_game':
                 this.stopCurrentGame();
+                this.broadcastGameState();
                 break;
             case 'set_result':
                 this.setGameResult(action.result);
+                this.broadcastGameState();
                 break;
         }
     }
@@ -228,6 +233,8 @@ class GameServer {
             .filter(client => client.isAuthenticated)
             .map(client => ({
                 id: client.userId,
+                username: client.username || 'Unknown',
+                walletBalance: client.walletBalance || 0,
                 isAdmin: client.isAdmin
             }));
 
