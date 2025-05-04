@@ -47,17 +47,30 @@ class GameClient {
     async registerUser(userData) {
         return new Promise((resolve, reject) => {
             const { username, password } = userData;
-            
-            db.run(`INSERT INTO users (id, username, password, wallet_balance) 
-                    VALUES (?, ?, ?, ?)`,
-                [username, username, password, 0],
-                (err) => {
-                    if (err) {
-                        reject(new Error('Username already exists'));
-                        return;
-                    }
-                    resolve({ success: true, message: 'Registration successful' });
-                });
+
+            // Check if username exists
+            db.get('SELECT * FROM users WHERE username = ?', [username], (err, row) => {
+                if (err) {
+                    reject(new Error('Database error'));
+                    return;
+                }
+                if (row) {
+                    reject(new Error('Username already exists'));
+                    return;
+                }
+
+                // Insert new user
+                db.run(`INSERT INTO users (id, username, password, wallet_balance) 
+                        VALUES (?, ?, ?, ?)`,
+                    [username, username, password, 0],
+                    (err) => {
+                        if (err) {
+                            reject(new Error('Failed to register user'));
+                            return;
+                        }
+                        resolve({ success: true, message: 'Registration successful' });
+                    });
+            });
         });
     }
 
