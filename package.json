@@ -4,9 +4,9 @@
   "description": "Offline Desktop Game with Admin and User Systems",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
-    "start:admin": "electron . --admin",
-    "start:user": "electron . --user"
+    "start": "electron . --no-sandbox",
+    "start:admin": "electron . --admin --no-sandbox",
+    "start:user": "electron . --user --no-sandbox"
   },
   "dependencies": {
     "electron": "^25.3.1",
