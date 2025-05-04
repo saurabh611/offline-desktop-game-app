@@ -1,0 +1,19 @@
+{
+  "name": "offline-desktop-game",
+  "version": "1.0.0",
+  "description": "Offline Desktop Game with Admin and User Systems",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "start:admin": "electron . --admin",
+    "start:user": "electron . --user"
+  },
+  "dependencies": {
+    "electron": "^25.3.1",
+    "sqlite3": "^5.1.6",
+    "ws": "^8.13.0",
+    "tailwindcss": "^3.3.3",
+    "bcryptjs": "^2.4.3",
+    "uuid": "^9.0.0"
+  }
+}
