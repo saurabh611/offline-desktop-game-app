@@ -162,6 +162,10 @@ function updatePotentialPayout() {
 }
 
 function updateWalletDisplay(balance) {
+    if (typeof balance !== 'number' || isNaN(balance)) {
+        walletBalance.textContent = '₹0.00';
+        return;
+    }
     walletBalance.textContent = `₹${balance.toFixed(2)}`;
 }
 
