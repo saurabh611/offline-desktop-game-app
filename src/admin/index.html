@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+                <div class="flex items-center space-x-4">
+                    <div class="text-sm text-gray-600">
+                        Server IP: <span id="server-ip" class="font-mono bg-gray-100 px-2 py-1 rounded">Loading...</span>
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        Connected Users: <span id="connected-users" class="font-semibold">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <!-- Game Control Panel -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-lg font-semibold mb-4">Game Control</h2>
+                <div class="space-y-4">
+                    <!-- Game Timer -->
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <div class="text-sm text-gray-600 mb-2">Current Game Time</div>
+                        <div id="game-timer" class="text-3xl font-mono">00:00</div>
+                    </div>
+
+                    <!-- Game Controls -->
+                    <div class="flex space-x-4">
+                        <button id="start-game" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
+                            <i class="fas fa-play mr-2"></i>Start Game
+                        </button>
+                        <button id="stop-game" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">
+                            <i class="fas fa-stop mr-2"></i>Stop Game
+                        </button>
+                    </div>
+
+                    <!-- Result Input -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700">Result Mode</label>
+                        <div class="flex space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="result-mode" value="manual" class="form-radio" checked>
+                                <span class="ml-2">Manual</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="result-mode" value="auto" class="form-radio">
+                                <span class="ml-2">Auto</span>
+                            </label>
+                        </div>
+                        <div id="manual-result-input" class="grid grid-cols-3 gap-4">
+                            <input type="text" placeholder="Open Panna" class="border rounded p-2" maxlength="3">
+                            <input type="text" placeholder="Jodi" class="border rounded p-2" maxlength="2">
+                            <input type="text" placeholder="Close Panna" class="border rounded p-2" maxlength="3">
+                        </div>
+                        <button id="declare-result" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                            <i class="fas fa-check-circle mr-2"></i>Declare Result
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Management -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-lg font-semibold mb-4">User Management</h2>
+                <div class="overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Wallet</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-list" class="bg-white divide-y divide-gray-200">
+                            <!-- Users will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game History & Bets -->
+        <div class="mt-8 bg-white rounded-lg shadow">
+            <div class="p-6">
+                <h2 class="text-lg font-semibold mb-4">Current Game Bets</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Number</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bets-list" class="bg-white divide-y divide-gray-200">
+                            <!-- Bets will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="admin.js"></script>
+</body>
+</html>
