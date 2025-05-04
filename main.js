@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const os = require('os');
 const isDev = process.env.NODE_ENV === 'development';
 const isAdmin = process.argv.includes('--admin');
 
@@ -30,6 +31,19 @@ app.whenReady().then(() => {
 
     app.on('activate', function () {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
+
+    // Add IPC handler for system:getIP
+    ipcMain.handle('system:getIP', () => {
+        const nets = os.networkInterfaces();
+        for (const name of Object.keys(nets)) {
+            for (const net of nets[name]) {
+                if (net.family === 'IPv4' && !net.internal) {
+                    return net.address;
+                }
+            }
+        }
+        return '127.0.0.1';
     });
 });
 
