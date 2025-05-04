@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Client</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .result-spinner {
+            transition: transform 3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .spinning {
+            transform: rotateY(1800deg);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Login/Register Modal -->
+    <div id="auth-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-96">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold" id="auth-title">Login</h2>
+                <button id="toggle-auth" class="text-blue-600 hover:text-blue-800">
+                    Register instead
+                </button>
+            </div>
+            <form id="auth-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Username</label>
+                    <input type="text" id="username" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div id="server-ip-input" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700">Admin Server IP</label>
+                    <input type="text" id="server-ip" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Login
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Content (hidden until authenticated) -->
+    <div id="main-content" class="hidden">
+        <!-- Header -->
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">Game Client</h1>
+                    <div class="flex items-center space-x-6">
+                        <div class="text-sm text-gray-600">
+                            Game Time: <span id="game-timer" class="font-mono bg-gray-100 px-2 py-1 rounded">00:00</span>
+                        </div>
+                        <div class="text-sm">
+                            Wallet Balance: <span id="wallet-balance" class="font-semibold">₹0.00</span>
+                        </div>
+                        <button id="logout" class="text-sm text-red-600 hover:text-red-800">
+                            <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+                <!-- Game Results -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-lg font-semibold mb-4">Game Results</h2>
+                    
+                    <!-- Current Result -->
+                    <div class="mb-6">
+                        <div class="text-sm text-gray-600 mb-2">Current Result</div>
+                        <div id="current-result" class="result-spinner bg-gray-50 p-4 rounded-lg text-center text-3xl font-mono">
+                            --- -- ---
+                        </div>
+                    </div>
+
+                    <!-- Last 5 Results -->
+                    <div>
+                        <div class="text-sm text-gray-600 mb-2">Last 5 Results</div>
+                        <div id="result-history" class="space-y-2">
+                            <!-- Results will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Betting Panel -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-lg font-semibold mb-4">Place Your Bet</h2>
+                    
+                    <form id="bet-form" class="space-y-4">
+                        <!-- Bet Type Selection -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Bet Type</label>
+                            <select id="bet-type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="single_digit">Single Digit</option>
+                                <option value="jodi">Jodi</option>
+                                <option value="single_panna">Single Panna</option>
+                                <option value="double_panna">Double Panna</option>
+                                <option value="triple_panna">Triple Panna</option>
+                            </select>
+                        </div>
+
+                        <!-- Number Input -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Number</label>
+                            <input type="text" id="bet-number" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" maxlength="3">
+                            <p class="mt-1 text-sm text-gray-500">
+                                Enter: 1 digit for Single, 2 for Jodi, 3 for Panna
+                            </p>
+                        </div>
+
+                        <!-- Amount Input -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Amount (₹)</label>
+                            <input type="number" id="bet-amount" min="1" step="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+
+                        <!-- Potential Payout -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">Potential Payout</div>
+                            <div id="potential-payout" class="text-2xl font-semibold">₹0.00</div>
+                        </div>
+
+                        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            Place Bet
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Betting History -->
+            <div class="mt-8 bg-white rounded-lg shadow">
+                <div class="p-6">
+                    <h2 class="text-lg font-semibold mb-4">Your Betting History</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Number</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Result</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="betting-history" class="bg-white divide-y divide-gray-200">
+                                <!-- Betting history will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="user.js"></script>
+</body>
+</html>
