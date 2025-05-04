@@ -29,8 +29,13 @@ contextBridge.exposeInMainWorld(
         onGameStateChange: (callback) => ipcRenderer.on('game:stateChanged', callback),
         onResultDeclared: (callback) => ipcRenderer.on('game:resultDeclared', callback),
         onConnectionStatus: (callback) => ipcRenderer.on('connection:status', callback),
+        onBetResponse: (callback) => ipcRenderer.on('bet:response', callback),
+        onBetPlaced: (callback) => ipcRenderer.on('bet:placed', callback),
         
         // System info
-        getIPAddress: () => ipcRenderer.invoke('system:getIP')
+        getIPAddress: () => ipcRenderer.invoke('system:getIP'),
+
+        // Connection
+        connectToServer: (serverIP) => ipcRenderer.invoke('system:connectToServer', serverIP)
     }
 );
